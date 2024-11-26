@@ -10,6 +10,8 @@
 #include <moments.h>
 #include <RAG.h>
 
+typedef struct moments * moments;
+
 struct moments {
     int    M0;
     double M1[3];
@@ -26,7 +28,7 @@ struct cellule {
 struct RAG {
     int size;
     image img;
-    struct moments *m;
+    moments m;
     int *father;
     cellule neighbours;
 };
@@ -114,4 +116,54 @@ extern void uncreate_RAG(Rag rag, int n, int m) {
     }
 
     free(rag->neighbours);
+}
+
+extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
+    double quadraticError;
+    double temp;
+    int i;
+    int tempind1;
+    int tempind2;
+    double uR;
+    double uG;
+    double uB;
+    quadraticError = 1E20;
+
+    for(i=0; i< rag->size;i++){
+        tempind1 = i;
+        if(rag->father[i] == i) {
+
+            if(rag->neighbours[i-1].block != 0) {
+                tempind2 = rag->neighbours[i-1].block;
+                temp = ((rag->m[tempind1].M0 * rag->m[tempind2].M0) / (rag->m[tempind1].M0+rag->m[tempind2].M0));
+                uR = ((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
+                uG = ((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
+                uB = ((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
+                temp *= (uR + uG + uB);
+
+                if(temp < quadraticError) {
+                    quadraticError = temp;
+                    *indBlock1 = tempind1;
+                    *indBlock2 = tempind2;
+                }
+            }
+
+            if(rag->neighbours[i-1].next->block != 0) {
+                tempind2 = rag->neighbours[i-1].next->block;
+                temp = ((rag->m[tempind1].M0 * rag->m[tempind2].M0) / (rag->m[tempind1].M0+rag->m[tempind2].M0));
+                uR = ((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
+                uG = ((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
+                uB = ((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
+                temp *= (uR + uG + uB);
+
+                if(temp < quadraticError) {
+                    quadraticError = temp;
+                    *indBlock1 = tempind1;
+                    *indBlock2 = tempind2;
+                }
+            }
+        }
+    }
+
+    return quadraticError;
 }

@@ -17,6 +17,6 @@ clean:
 
 $(PATH_OBJ)%.o: $(SRC)%.c $(HEADER)
 	@echo "Utilisation des options : $(CFLAGS)."
-	@$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
 .PHONY: all clean

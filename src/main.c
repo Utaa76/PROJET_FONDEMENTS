@@ -1,14 +1,5 @@
-#ifndef STDIO_H
-    #define STDIO_H
-    #include <stdio.h>
-#endif
-#ifndef STDLIB_H
-    #define STDLIB_H
-    #include <stdlib.h>
-#endif
 #include <image.h>
 #include <moments.h>
-#include <quadError.h>
 #include <RAG.h>
 
 int main(void) {
