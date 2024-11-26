@@ -1,8 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <image.h>
-#include <moments.h>
+#ifndef STDIO_H
+    #define STDIO_H
+    #include <stdio.h>
+#endif
+#ifndef STDLIB_H
+    #define STDLIB_H
+    #include <stdlib.h>
+#endif
 #include <RAG.h>
+#include <quadError.h>
 
 extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
     double quadraticError;

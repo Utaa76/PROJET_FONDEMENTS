@@ -1,5 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef STDIO_H
+    #define STDIO_H
+    #include <stdio.h>
+#endif
+#ifndef STDLIB_H
+    #define STDLIB_H
+    #include <stdlib.h>
+#endif
 #include <image.h>
 #include "moments.h"
 
@@ -37,9 +43,7 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
     heightBlock = image_give_hauteur(img) / m;
 
     /* Calculation of M0 */
-    printf("M0\n");
     *M0 = widthBlock*heightBlock*dimBlock;
-    printf("M0 réussi\n");
 
     /* Calculation of M1 and M2*/
     image_debut(img);
@@ -86,11 +90,5 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
             image_pixel_dessous(img);
         }
     }
-    printf("INITX = %d, INITY = %d\n", initialX, initialY);
-    printf("X = %d, Y = %d\n", X, Y);
-
-    printf("M0 = %d\n", *M0);
-    printf("M1[0] = %f ; M1[1] = %f ; M1[2] = %f\n",M1[0], M1[1], M1[2]);
-    printf("M2[0] = %f ; M2[1] = %f ; M2[2] = %f\n",M2[0], M2[1], M2[2]);
 }
 

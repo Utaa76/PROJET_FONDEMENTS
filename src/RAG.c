@@ -1,10 +1,15 @@
-#include <stdio.h>
+#ifndef STDIO_H
+    #define STDIO_H
+    #include <stdio.h>
+#endif
+#ifndef STDLIB_H
+    #define STDLIB_H
+    #include <stdlib.h>
+#endif
 #include <image.h>
-#include <stdlib.h>
 #include <moments.h>
 #include <RAG.h>
 
-typedef struct moments;
 struct moments {
     int    M0;
     double M1[3];
@@ -66,18 +71,25 @@ extern Rag create_RAG(image img, int n, int m) {
         }
 
         /* Lower neighbour */
-        if (i >= (n*(m-1))) {
-            if (nbNeighbours == 1) {
-                rag->neighbours[i-1].next = malloc(sizeof(struct cellule));
-                rag->neighbours[i-1].next->block = i+n;
-                rag->neighbours[i-1].next->next = NULL;
-            } else {
-                rag->neighbours[i-1].block = i+n;
-                rag->neighbours[i-1].next = NULL;
-            }
+        if ((i <= (n*(m-1))) && (nbNeighbours == 1)) {  /* If there is already a right neighbour and he has a down neighbour */
+
+            rag->neighbours[i-1].next = malloc(sizeof(struct cellule));
+            rag->neighbours[i-1].next->block = i+n;
+            rag->neighbours[i-1].next->next = malloc(sizeof(struct cellule));
+            rag->neighbours[i-1].next->next = NULL;
         }
+        else if(i <= (n*(m-1))) { /* If there is no right neighbours but a down neighbour exists */
+            rag->neighbours[i-1].next = malloc(sizeof(struct cellule));
+            rag->neighbours[i-1].block = i+n;
+            rag->neighbours[i-1].next = NULL;
+        }
+        else { /* If there is no neighbours */
+            rag->neighbours[i-1].block = -1;
+            rag->neighbours[i-1].next = NULL;
+        }
+        
     }
-    
+        
     return rag;
 }
 
@@ -86,8 +98,7 @@ void free_neighbours_next(cellule next) {
         free(next);
         return;
     }
-
-    return free_neighbours_next(next->next);
+    free_neighbours_next(next->next);
 }
 
 extern void uncreate_RAG(Rag rag, int n, int m) {
@@ -97,7 +108,9 @@ extern void uncreate_RAG(Rag rag, int n, int m) {
 
     /** @todo free les neighbours next */
     for (i = 0 ; i < n*m ; i++) {
-        free_neighbours_next(rag->neighbours[i].next);
+        if (rag->neighbours[i].next != NULL) {
+            free_neighbours_next(rag->neighbours[i].next);
+        }
     }
 
     free(rag->neighbours);
