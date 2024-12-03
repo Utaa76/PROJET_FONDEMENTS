@@ -108,7 +108,6 @@ extern void uncreate_RAG(Rag rag, int n, int m) {
     free(rag->m);
     free(rag->father);
 
-    /** @todo free les neighbours next */
     for (i = 0 ; i < n*m ; i++) {
         if (rag->neighbours[i].next != NULL) {
             free_neighbours_next(rag->neighbours[i].next);
@@ -118,52 +117,72 @@ extern void uncreate_RAG(Rag rag, int n, int m) {
     free(rag->neighbours);
 }
 
+extern double absoluteValue(double val){
+    if(val < 0) {
+        val = -val;
+    }
+    return val;
+}
+
 extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
     double quadraticError;
     double temp;
     int i;
-    int tempind1;
     int tempind2;
     double uR;
     double uG;
     double uB;
+    double a;
+    int b;
     quadraticError = 1E20;
 
     for(i=0; i< rag->size;i++){
-        tempind1 = i;
-        if(rag->father[i] == i) {
-
-            if(rag->neighbours[i-1].block != 0) {
-                tempind2 = rag->neighbours[i-1].block;
-                temp = ((rag->m[tempind1].M0 * rag->m[tempind2].M0) / (rag->m[tempind1].M0+rag->m[tempind2].M0));
-                uR = ((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
-                uG = ((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
-                uB = ((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
-                temp *= (uR + uG + uB);
-
+        if(rag->father[i] == i+1) {
+            /* If the current block has a neighbour */
+            if(rag->neighbours[i].block != -1) {
+                tempind2 = rag->neighbours[i].block;
+                a = (double)rag->m[i].M0 * (double)rag->m[tempind2].M0;
+                b = (double)rag->m[i].M0 + (double)rag->m[tempind2].M0;
+                temp = a / b;
+                uR = ((rag->m[i].M1[0] / rag->m[i].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
+                uR *= uR;
+                uG = ((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
+                uG *= uG;
+                uB = ((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
+                temp *= absoluteValue(uR + uG + uB);
                 if(temp < quadraticError) {
                     quadraticError = temp;
-                    *indBlock1 = tempind1;
+                    *indBlock1 = i + 1;
                     *indBlock2 = tempind2;
                 }
-            }
 
-            if(rag->neighbours[i-1].next->block != 0) {
-                tempind2 = rag->neighbours[i-1].next->block;
-                temp = ((rag->m[tempind1].M0 * rag->m[tempind2].M0) / (rag->m[tempind1].M0+rag->m[tempind2].M0));
-                uR = ((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[0] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
-                uG = ((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[1] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
-                uB = ((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[tempind1].M1[2] / rag->m[tempind1].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
-                temp *= (uR + uG + uB);
+                /* If the current block's neighbour has also a neighbour */
+                if(rag->neighbours[i].next != NULL) {
+                    tempind2 = rag->neighbours[i].next->block;
+                    a = (double)rag->m[i].M0 * (double)rag->m[tempind2].M0;
+                    b = (double)rag->m[i].M0 + (double)rag->m[tempind2].M0;
+                    temp = a / b;
+                    uR = ((rag->m[i].M1[0] / rag->m[i].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0))*((rag->m[i].M1[0] / rag->m[i].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
+                    uG = ((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
+                    uB = ((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
+                    temp *= absoluteValue(uR + uG + uB);
 
-                if(temp < quadraticError) {
-                    quadraticError = temp;
-                    *indBlock1 = tempind1;
-                    *indBlock2 = tempind2;
+                    if(temp < quadraticError) {
+                        quadraticError = temp;
+                        *indBlock1 = i + 1;
+                        *indBlock2 = tempind2;
+                    }
                 }
-            }
+            } 
         }
     }
-
+    printf("1 = %d  2 = %d\n",*indBlock1, *indBlock2);
     return quadraticError;
 }
+/*
+1  2  3  4  5
+6  7  8  9  10
+11 12 13 14 15
+16 17 18 19 20
+21 22 23 24 25
+*/

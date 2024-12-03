@@ -12,7 +12,7 @@ int main(void) {
     b = 4;
 
     img = FAIRE_image();
-    image_charger(img, "./IMAGES/zelda.ppm");
+    image_charger(img, "./IMAGES/papillon.ppm");
     
     rag = create_RAG(img, 5, 5);
     printf("%f\n", RAG_give_closest_region(rag, &a, &b));
