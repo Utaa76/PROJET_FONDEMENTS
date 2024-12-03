@@ -10,29 +10,6 @@
 #include <moments.h>
 #include <RAG.h>
 
-typedef struct moments * moments;
-
-struct moments {
-    int    M0;
-    double M1[3];
-    double M2[3];
-};
-
-typedef struct cellule* cellule;
-
-struct cellule {
-    int block;
-    cellule next;
-};
-
-struct RAG {
-    int size;
-    image img;
-    moments m;
-    int *father;
-    cellule neighbours;
-};
-
 extern Rag create_RAG(image img, int n, int m) {
     Rag rag;
     int    M0;
@@ -73,19 +50,22 @@ extern Rag create_RAG(image img, int n, int m) {
         }
 
         /* Lower neighbour */
-        if ((i <= (n*(m-1))) && (nbNeighbours == 1)) {  /* If there is already a right neighbour and he has a down neighbour */
+        if ((i <= (n*(m-1))) && (nbNeighbours == 1)) {  /* If there is already a right neighbour and he has a below neighbour */
 
             rag->neighbours[i-1].next = malloc(sizeof(struct cellule));
             rag->neighbours[i-1].next->block = i+n;
             rag->neighbours[i-1].next->next = malloc(sizeof(struct cellule));
             rag->neighbours[i-1].next->next = NULL;
-        }
-        else if(i <= (n*(m-1))) { /* If there is no right neighbours but a down neighbour exists */
+
+        } else if(i <= (n*(m-1))) { /* If there is no right neighbours but a below neighbour exists */
             rag->neighbours[i-1].next = malloc(sizeof(struct cellule));
             rag->neighbours[i-1].block = i+n;
             rag->neighbours[i-1].next = NULL;
-        }
-        else { /* If there is no neighbours */
+
+        } else if(nbNeighbours == 1) { /* If there is only a right neighbour */
+            rag->neighbours[i-1].next = NULL;
+
+        } else { /* If there is no neighbours */
             rag->neighbours[i-1].block = -1;
             rag->neighbours[i-1].next = NULL;
         }
@@ -93,28 +73,6 @@ extern Rag create_RAG(image img, int n, int m) {
     }
         
     return rag;
-}
-
-void free_neighbours_next(cellule next) {
-    if (next->next == NULL) {
-        free(next);
-        return;
-    }
-    free_neighbours_next(next->next);
-}
-
-extern void uncreate_RAG(Rag rag, int n, int m) {
-    int i;
-    free(rag->m);
-    free(rag->father);
-
-    for (i = 0 ; i < n*m ; i++) {
-        if (rag->neighbours[i].next != NULL) {
-            free_neighbours_next(rag->neighbours[i].next);
-        }
-    }
-
-    free(rag->neighbours);
 }
 
 extern double absoluteValue(double val){
@@ -140,6 +98,7 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
         if(rag->father[i] == i+1) {
             /* If the current block has a neighbour */
             if(rag->neighbours[i].block != -1) {
+                rag->neighbours[i].block = rag->father[(rag->neighbours[i].block) - 1];
                 tempind2 = rag->neighbours[i].block;
                 a = (double)rag->m[i].M0 * (double)rag->m[tempind2].M0;
                 b = (double)rag->m[i].M0 + (double)rag->m[tempind2].M0;
@@ -158,6 +117,7 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
 
                 /* If the current block's neighbour has also a neighbour */
                 if(rag->neighbours[i].next != NULL) {
+                    rag->neighbours[i].block = rag->father[(rag->neighbours[i].block) - 1];
                     tempind2 = rag->neighbours[i].next->block;
                     a = (double)rag->m[i].M0 * (double)rag->m[tempind2].M0;
                     b = (double)rag->m[i].M0 + (double)rag->m[tempind2].M0;
@@ -176,13 +136,79 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
             } 
         }
     }
-    printf("1 = %d  2 = %d\n",*indBlock1, *indBlock2);
     return quadraticError;
 }
-/*
-1  2  3  4  5
-6  7  8  9  10
-11 12 13 14 15
-16 17 18 19 20
-21 22 23 24 25
-*/
+
+extern void RAG_merge_region(Rag rag, int indBlock1, int indBlock2) {
+    int tmp;
+    int i;
+    cellule last2;
+    cellule neighbour;
+
+    if (indBlock1 > indBlock2) {
+        tmp = indBlock1;
+        indBlock1 = indBlock2;
+        indBlock2 = tmp;
+    }
+
+    printf("1 %d\n", rag->neighbours[indBlock1 - 1].block);
+    printf("2 %d\n", rag->neighbours[indBlock2 - 1].block);
+
+    /* Updating the father array */
+    rag->father[indBlock1-1] = indBlock2;
+
+    /* Updating the moments array */
+    rag->m[indBlock2-1].M0 += rag->m[indBlock1-1].M0;
+
+    for (i = 0 ; i < 3 ; i++) {
+        rag->m[indBlock2-1].M1[i] += rag->m[indBlock1-1].M1[i];
+        rag->m[indBlock2-1].M2[i] += rag->m[indBlock1-1].M2[i];
+    }
+
+    /* Updating the neighbours array */
+    /* TODO Mixx neighbours in order */
+    last2 = &rag->neighbours[indBlock2-1];
+    while (last2->next != NULL) {
+        last2 = last2->next;
+    }
+
+    neighbour = &rag->neighbours[indBlock1-1];
+    last2->next = neighbour;
+
+
+    rag->neighbours[indBlock1-1].block = -1;
+    rag->neighbours[indBlock1-1].next  = NULL;
+}
+
+/* Faire la question */
+extern void RAG_normalize_parents(Rag rag) {
+    int i;
+    for( i=(rag->size)-1; i>=0; i--) {
+        rag->father[i] = rag->father[rag->father[i]];
+    }
+}
+
+void free_neighbours_next(cellule next) {
+    if (next->next == NULL || next->block != -1) {
+        printf("free %d\n", next->block);
+        free(next);
+        return;
+    }
+    free_neighbours_next(next->next);
+}
+
+extern void uncreate_RAG(Rag rag, int n, int m) {
+    int i;
+    free(rag->m);
+    free(rag->father);
+
+    for (i = 0 ; i < n*m ; i++) {
+        printf("bloc %d\n", i+1);
+        if ((rag->neighbours[i].next != NULL) && (rag->neighbours[i].block != -1)) {
+            printf("free 2 ==> %d\n", rag->neighbours[i].next->block);s
+            free_neighbours_next(rag->neighbours[i].next);
+        }
+    }
+
+    free(rag->neighbours);
+}

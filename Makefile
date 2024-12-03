@@ -1,6 +1,6 @@
 CC = gcc
 OBJ = ./obj/*.o
-HEADER = ./include/*.h
+HEADER = ./include/image.h ./include/merge.h ./include/classe.h ./include/exit_if.h ./include/moments.h ./include/move_type.h ./include/objet.h ./include/point.h ./include/RAG.h ./include/type_obj.h
 CFLAGS = -Wall -ansi -pedantic -c -g
 SRC = ./src/
 CPPFLAGS = -I./include/
@@ -15,7 +15,7 @@ app:$(OBJ)
 clean:
 	rm $(OBJ)
 
-$(PATH_OBJ)%.o: $(SRC)%.c $(HEADER)
+${PATH_OBJ}%.o: ${SRC}%.c $(HEADER)
 	@echo "Utilisation des options : $(CFLAGS)."
 	$(CC) $(CPPFLAGS) $(CFLAGS) $< -o $@
 
