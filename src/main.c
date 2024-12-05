@@ -29,8 +29,6 @@ int main(void) {
     
     perform_merge(rag, error);
 
-    printf("15--> %d\n", rag->neighbours[14].block);
-
     uncreate_RAG(rag, n, m);
     DEFAIRE_image(img);
     

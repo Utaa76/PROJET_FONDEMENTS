@@ -142,42 +142,61 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
 extern void RAG_merge_region(Rag rag, int indBlock1, int indBlock2) {
     int tmp;
     int i;
-    cellule last2;
-    cellule neighbour;
-
+    struct cellule *last2;Z
+    struct cellule *neighbour1;
+    struct cellule *celTmp;
+    
+    /* We make sure that indBlock1 is the smallest value */
     if (indBlock1 > indBlock2) {
         tmp = indBlock1;
         indBlock1 = indBlock2;
         indBlock2 = tmp;
     }
 
-    printf("1 %d\n", rag->neighbours[indBlock1 - 1].block);
-    printf("2 %d\n", rag->neighbours[indBlock2 - 1].block);
-
     /* Updating the father array */
-    rag->father[indBlock1-1] = indBlock2;
+    rag->father[indBlock1] = indBlock2;
 
     /* Updating the moments array */
-    rag->m[indBlock2-1].M0 += rag->m[indBlock1-1].M0;
+    rag->m[indBlock2].M0 += rag->m[indBlock1].M0;
 
     for (i = 0 ; i < 3 ; i++) {
-        rag->m[indBlock2-1].M1[i] += rag->m[indBlock1-1].M1[i];
-        rag->m[indBlock2-1].M2[i] += rag->m[indBlock1-1].M2[i];
+        rag->m[indBlock2].M1[i] += rag->m[indBlock1].M1[i];
+        rag->m[indBlock2].M2[i] += rag->m[indBlock1].M2[i];
     }
 
     /* Updating the neighbours array */
     /* TODO Mixx neighbours in order */
-    last2 = &rag->neighbours[indBlock2-1];
+    last2 = &rag->neighbours[indBlock2];
     while (last2->next != NULL) {
         last2 = last2->next;
     }
 
-    neighbour = &rag->neighbours[indBlock1-1];
-    last2->next = neighbour;
+    /* Adding the neighbour only if it's NOT the block2*/
+    printf("b1 = %d b2 = %d\n", indBlock1+1, indBlock2+1);
+    neighbour1 = &rag->neighbours[indBlock1]; /* FIXME l'adresse de neighbour1 n'est pas atteignable */
+    while (neighbour1->next != NULL) {
+        printf("%d b\n", neighbour1->block);
+        if (neighbour1->block == indBlock2+1) { /*Cas du doublon*/ /*TODO A traduire*/
+            celTmp->next = neighbour1->next;
+            free(neighbour1);
+        } else {
+            if (neighbour1 == &rag->neighbours[indBlock1]) {
+                last2->next = malloc(sizeof(struct cellule));
+                last2->next->block = neighbour1->block;
+                last2->next->next = neighbour1->next;
+            } else {
+                last2->next = neighbour1;
+                last2 = last2->next;
+            }
+        }
 
+        celTmp = neighbour1;
+        neighbour1 = neighbour1->next;
+    }
 
-    rag->neighbours[indBlock1-1].block = -1;
-    rag->neighbours[indBlock1-1].next  = NULL;
+    /* indBlock1 has now 0 neighbour */
+    rag->neighbours[indBlock1].block = -1;
+    rag->neighbours[indBlock1].next  = NULL;
 }
 
 /* Faire la question */
@@ -188,9 +207,11 @@ extern void RAG_normalize_parents(Rag rag) {
     }
 }
 
+static int cptFree = 2;
 void free_neighbours_next(cellule next) {
-    if (next->next == NULL || next->block != -1) {
-        printf("free %d\n", next->block);
+    if (next->next == NULL || next->block == -1) {
+        printf("test frees %d\n", cptFree);
+        cptFree++;
         free(next);
         return;
     }
@@ -203,12 +224,13 @@ extern void uncreate_RAG(Rag rag, int n, int m) {
     free(rag->father);
 
     for (i = 0 ; i < n*m ; i++) {
-        printf("bloc %d\n", i+1);
         if ((rag->neighbours[i].next != NULL) && (rag->neighbours[i].block != -1)) {
-            printf("free 2 ==> %d\n", rag->neighbours[i].next->block);s
             free_neighbours_next(rag->neighbours[i].next);
         }
     }
 
     free(rag->neighbours);
+    cptFree++;
+
+    printf("frees %d\n", cptFree);
 }

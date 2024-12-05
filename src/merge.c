@@ -10,7 +10,6 @@ void perform_merge(Rag rag, double threshold) {
     indblock2 = malloc(sizeof(int));
     
     while(RAG_give_closest_region(rag, indblock1, indblock2) <= threshold ) {
-        printf("%d and %d\n", rag->father[*indblock1 - 1], rag->father[*indblock2 - 1]);
         RAG_merge_region(rag, rag->father[*indblock1 - 1], rag->father[*indblock2 - 1]);
     }
     free(indblock1);
