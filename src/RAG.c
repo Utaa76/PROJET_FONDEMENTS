@@ -142,7 +142,7 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
 extern void RAG_merge_region(Rag rag, int indBlock1, int indBlock2) {
     int tmp;
     int i;
-    struct cellule *last2;Z
+    struct cellule *last2;
     struct cellule *neighbour1;
     struct cellule *celTmp;
     
