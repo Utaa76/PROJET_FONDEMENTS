@@ -87,50 +87,45 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
     double temp;
     int i;
     int tempind2;
-    double uR;
-    double uG;
-    double uB;
-    double a;
-    int b;
+    cellule cursor;
     quadraticError = 1E20;
 
     for(i=0; i< rag->size;i++){
+
+        cursor = &rag->neighbours[i];
+        while (cursor != NULL) {
+            
+            if (cursor->block != -1) {
+                cursor->block = rag->father[(cursor->block) - 1];
+            }
+            cursor = cursor->next;
+        }
+        
         if(rag->father[i] == i+1) {
+
             /* If the current block has a neighbour */
             if(rag->neighbours[i].block != -1) {
-                rag->neighbours[i].block = rag->father[(rag->neighbours[i].block) - 1];
-                tempind2 = rag->neighbours[i].block;
-                a = (double)rag->m[i].M0 * (double)rag->m[tempind2].M0;
-                b = (double)rag->m[i].M0 + (double)rag->m[tempind2].M0;
-                temp = a / b;
-                uR = ((rag->m[i].M1[0] / rag->m[i].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
-                uR *= uR;
-                uG = ((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
-                uG *= uG;
-                uB = ((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
-                temp *= absoluteValue(uR + uG + uB);
+                tempind2 = rag->neighbours[i].block - 1;
+
+                temp = errorCalcul(rag->m[i].M0, rag->m[i].M1, rag->m[tempind2].M0, rag->m[tempind2].M1);
                 if(temp < quadraticError) {
                     quadraticError = temp;
-                    *indBlock1 = i + 1;
+                    *indBlock1 = i;
                     *indBlock2 = tempind2;
                 }
 
                 /* If the current block's neighbour has also a neighbour */
                 if(rag->neighbours[i].next != NULL) {
-                    rag->neighbours[i].block = rag->father[(rag->neighbours[i].block) - 1];
-                    tempind2 = rag->neighbours[i].next->block;
-                    a = (double)rag->m[i].M0 * (double)rag->m[tempind2].M0;
-                    b = (double)rag->m[i].M0 + (double)rag->m[tempind2].M0;
-                    temp = a / b;
-                    uR = ((rag->m[i].M1[0] / rag->m[i].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0))*((rag->m[i].M1[0] / rag->m[i].M0) - (rag->m[tempind2].M1[0] / rag->m[tempind2].M0));
-                    uG = ((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0))*((rag->m[i].M1[1] / rag->m[i].M0) - (rag->m[tempind2].M1[1] / rag->m[tempind2].M0));
-                    uB = ((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0))*((rag->m[i].M1[2] / rag->m[i].M0) - (rag->m[tempind2].M1[2] / rag->m[tempind2].M0));
-                    temp *= absoluteValue(uR + uG + uB);
-
-                    if(temp < quadraticError) {
-                        quadraticError = temp;
-                        *indBlock1 = i + 1;
-                        *indBlock2 = tempind2;
+                    cursor = rag->neighbours[i].next;
+                    while (cursor->next != NULL) {
+                        tempind2 = cursor->next->block - 1;
+                        temp = errorCalcul(rag->m[i].M0, rag->m[i].M1, rag->m[tempind2].M0, rag->m[tempind2].M1);
+                        if(temp < quadraticError) {
+                            quadraticError = temp;
+                            *indBlock1 = i;
+                            *indBlock2 = tempind2;
+                        }   
+                        cursor = cursor->next;
                     }
                 }
             } 
@@ -139,12 +134,29 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
     return quadraticError;
 }
 
+double errorCalcul(double M0ind1, double M1ind1[3], double M0ind2, double M1ind2[3]) {
+    double error;
+    double uR;
+    double uG;
+    double uB;
+
+    error = (M0ind1 * M0ind2) / ( M0ind1 + M0ind2);
+    uR = ((M1ind1[0] / M0ind1) - (M1ind2[0] / M0ind2));
+    uG = ((M1ind1[1] / M0ind1) - (M1ind2[1] / M0ind2));
+    uB = ((M1ind1[2] / M0ind1) - (M1ind2[2] / M0ind2));
+
+    error = absoluteValue(uR*uR + uG*uG + uB*uB);
+
+    return error;
+}
+
 extern void RAG_merge_region(Rag rag, int indBlock1, int indBlock2) {
     int tmp;
     int i;
     struct cellule *last2;
     struct cellule *neighbour1;
     struct cellule *celTmp;
+    struct cellule *celTmp2;
     
     /* We make sure that indBlock1 is the smallest value */
     if (indBlock1 > indBlock2) {
@@ -154,7 +166,15 @@ extern void RAG_merge_region(Rag rag, int indBlock1, int indBlock2) {
     }
 
     /* Updating the father array */
-    rag->father[indBlock1] = indBlock2;
+    rag->father[indBlock1] = indBlock2+1;
+
+    /* We change the father of the blocks that have indBlock1 as father */
+    /* TODO A retirer au besoin*/
+    /*for (i = 0 ; i < indBlock1 ; i++) {
+        if (rag->father[i] == indBlock1+1) {
+            rag->father[i] = indBlock2+1;
+        }
+    }*/
 
     /* Updating the moments array */
     rag->m[indBlock2].M0 += rag->m[indBlock1].M0;
@@ -172,13 +192,18 @@ extern void RAG_merge_region(Rag rag, int indBlock1, int indBlock2) {
     }
 
     /* Adding the neighbour only if it's NOT the block2*/
-    printf("b1 = %d b2 = %d\n", indBlock1+1, indBlock2+1);
-    neighbour1 = &rag->neighbours[indBlock1]; /* FIXME l'adresse de neighbour1 n'est pas atteignable */
-    while (neighbour1->next != NULL) {
-        printf("%d b\n", neighbour1->block);
-        if (neighbour1->block == indBlock2+1) { /*Cas du doublon*/ /*TODO A traduire*/
-            celTmp->next = neighbour1->next;
-            free(neighbour1);
+    neighbour1 = &rag->neighbours[indBlock1];
+    celTmp = NULL;
+    while (neighbour1 != NULL) {
+        if (neighbour1->block <= indBlock2+1) { /*Duplicate case*/
+            if (celTmp != NULL) {
+                celTmp->next = neighbour1->next;
+                celTmp = NULL;
+                celTmp2 = neighbour1->next;
+                free(neighbour1);
+                neighbour1 = celTmp2;
+                continue;
+            }
         } else {
             if (neighbour1 == &rag->neighbours[indBlock1]) {
                 last2->next = malloc(sizeof(struct cellule));
@@ -203,15 +228,13 @@ extern void RAG_merge_region(Rag rag, int indBlock1, int indBlock2) {
 extern void RAG_normalize_parents(Rag rag) {
     int i;
     for( i=(rag->size)-1; i>=0; i--) {
-        rag->father[i] = rag->father[rag->father[i]];
+        rag->father[i] = rag->father[rag->father[i] - 1];
+
     }
 }
 
-static int cptFree = 2;
 void free_neighbours_next(cellule next) {
     if (next->next == NULL || next->block == -1) {
-        printf("test frees %d\n", cptFree);
-        cptFree++;
         free(next);
         return;
     }
@@ -230,7 +253,14 @@ extern void uncreate_RAG(Rag rag, int n, int m) {
     }
 
     free(rag->neighbours);
-    cptFree++;
+}
 
-    printf("frees %d\n", cptFree);
+extern void RAG_give_mean_color(Rag rag, int indBlock, int* avgColor) {
+    int fatherBlock;
+    int i;
+    fatherBlock = rag->father[indBlock]-1;
+    avgColor = malloc(sizeof(int) * 3);
+    for (i=0; i<3; i++) {
+        avgColor[i] = rag->m[fatherBlock].M1[i] / rag->m[fatherBlock].M0;
+    }
 }

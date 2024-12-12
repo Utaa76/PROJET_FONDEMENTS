@@ -2,7 +2,7 @@
 #include <moments.h>
 #include <merge.h>
 
-int main(void) {
+int main(int argc, char* argv[]) {
     image img;
     Rag rag;
     int* indBlock1;
@@ -17,17 +17,20 @@ int main(void) {
     n = 5;
     m = 5;
 
-    error = 1E10;
+    error = 6E3;
 
     img = FAIRE_image();
-    image_charger(img, "./IMAGES/papillon.ppm");
+    image_charger(img, "./IMAGES/zelda.ppm");
     
     rag = create_RAG(img, n, m);
 
-    RAG_merge_region(rag, 21, 22);
     printf("%f\n", RAG_give_closest_region(rag, indBlock1, indBlock2));
     
     perform_merge(rag, error);
+
+    RAG_normalize_parents(rag);
+
+    create_output_image(rag, n, m);
 
     uncreate_RAG(rag, n, m);
     DEFAIRE_image(img);

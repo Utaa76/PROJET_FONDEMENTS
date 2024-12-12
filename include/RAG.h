@@ -33,5 +33,6 @@ extern double RAG_give_closest_region(Rag,int*,int*);
 extern double absoluteValue(double);
 extern void RAG_merge_region(Rag, int, int);
 extern void RAG_normalize_parents(Rag);
-
+double errorCalcul(double, double[3], double, double[3]);
+extern void RAG_give_mean_color(Rag, int, int*);
 #endif
