@@ -43,7 +43,7 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
     heightBlock = image_give_hauteur(img) / m;
 
     /* Calculation of M0 */
-    *M0 = widthBlock*heightBlock*dimBlock;
+    *M0 = widthBlock*heightBlock;
 
     /* Calculation of M1 and M2*/
     image_debut(img);
@@ -60,21 +60,31 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
     for (j = 0 ; j < Y ; j++) {
         image_pixel_dessous(img);
     }
+
+    M1[0] = 0.0;
+    M1[1] = 0.0;
+    M1[2] = 0.0;
+    M2[0] = 0.0;
+    M2[1] = 0.0;
+    M2[2] = 0.0;
+
     /* Loop for each lines of the Block */
     while( (Y <= (initialY + heightBlock)) && (X <= (initialX + widthBlock)) ) {
         for (i = 0 ; i < widthBlock ; i++) {
             tabRGB = image_lire_pixel(img);
+            printf("rouge %d\n", tabRGB[0]);
             M1[0] += tabRGB[0];
             M1[1] += tabRGB[1];
             M1[2] += tabRGB[2];
             M2[0] += tabRGB[0] * tabRGB[0];
             M2[1] += tabRGB[1] * tabRGB[1];
             M2[2] += tabRGB[2] * tabRGB[2];
+            image_pixel_droite(img);
             X++;
         }
         Y++;
         image_pixel_dessous(img);
-        
+
         if (Y <= (initialY + heightBlock)) {
             for(j = 0; j < widthBlock; j++) {
                 tabRGB = image_lire_pixel(img);
@@ -84,11 +94,16 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
                 M2[0] += tabRGB[0] * tabRGB[0];
                 M2[1] += tabRGB[1] * tabRGB[1];
                 M2[2] += tabRGB[2] * tabRGB[2];
+                image_pixel_gauche(img);
                 X--;
             }
             Y++;
             image_pixel_dessous(img);
         }
+        printf("M1[0] %f\n", M1[0]);
     }
+
+    printf("X*Y %d\nM0 %d\n", X*Y, *M0);
+    printf("M1/M0 %f\n", M1[0] / *M0);
 }
 

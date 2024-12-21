@@ -258,9 +258,16 @@ extern void uncreate_RAG(Rag rag, int n, int m) {
 extern void RAG_give_mean_color(Rag rag, int indBlock, int* avgColor) {
     int fatherBlock;
     int i;
+    int totalPixels;
+    double localM1[3];
     fatherBlock = rag->father[indBlock]-1;
-    avgColor = malloc(sizeof(int) * 3);
+    totalPixels = rag->m[fatherBlock].M0;
+    localM1[0] = rag->m[fatherBlock].M1[0];
+    printf("totalPixels = %d, M1[0] = %f\n", totalPixels, localM1[0]);
+    printf("r dans un pixel (en moyenne) : %f\n", localM1[0]*rag->size/(totalPixels));
+    localM1[1] = rag->m[fatherBlock].M1[1];
+    localM1[2] = rag->m[fatherBlock].M1[2];
     for (i=0; i<3; i++) {
-        avgColor[i] = rag->m[fatherBlock].M1[i] / rag->m[fatherBlock].M0;
+        avgColor[i] = localM1[i] / totalPixels;
     }
 }
