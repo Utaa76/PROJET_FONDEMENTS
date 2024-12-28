@@ -10,10 +10,7 @@ int main(int argc, char* argv[]) {
     int n;
     int m;
     double error;
-    int M0;
-    double M1[3];
-    double M2[3];
-
+    
     indBlock1 = malloc(sizeof(int));
     indBlock2 = malloc(sizeof(int));
 
@@ -23,15 +20,9 @@ int main(int argc, char* argv[]) {
     error = 2.0;
 
     img = FAIRE_image();
-    image_charger(img, "./IMAGES/fleurs.ppm");
+    image_charger(img, "./IMAGES/house.ppm");
 
-    /*give_moments(img, 9, n, m, &M0, M1, M2);
-
-    return 1;*/
-    
     rag = create_RAG(img, n, m);
-
-    printf("%f\n", RAG_give_closest_region(rag, indBlock1, indBlock2));
     
     perform_merge(rag, error);
 

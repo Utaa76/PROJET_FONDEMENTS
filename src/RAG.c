@@ -1,11 +1,4 @@
-#ifndef STDIO_H
-    #define STDIO_H
-    #include <stdio.h>
-#endif
-#ifndef STDLIB_H
-    #define STDLIB_H
-    #include <stdlib.h>
-#endif
+#include <stdio.h>
 #include <image.h>
 #include <moments.h>
 #include <RAG.h>
@@ -88,7 +81,7 @@ extern double RAG_give_closest_region(Rag rag, int* indBlock1, int* indBlock2) {
     int i;
     int tempind2;
     cellule cursor;
-    quadraticError = 1E20;
+    quadraticError = 1E20; /*TODO useful?*/
 
     for(i=0; i< rag->size;i++){
 
@@ -263,8 +256,6 @@ extern void RAG_give_mean_color(Rag rag, int indBlock, int* avgColor) {
     fatherBlock = rag->father[indBlock]-1;
     totalPixels = rag->m[fatherBlock].M0;
     localM1[0] = rag->m[fatherBlock].M1[0];
-    printf("totalPixels = %d, M1[0] = %f\n", totalPixels, localM1[0]);
-    printf("r dans un pixel (en moyenne) : %f\n", localM1[0]*rag->size/(totalPixels));
     localM1[1] = rag->m[fatherBlock].M1[1];
     localM1[2] = rag->m[fatherBlock].M1[2];
     for (i=0; i<3; i++) {

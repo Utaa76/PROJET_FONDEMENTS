@@ -28,7 +28,6 @@
 extern void give_moments(image img, int numBlock, int n, int m, int* M0, double* M1, double* M2) {
     int widthBlock ;
     int heightBlock;
-    int dimBlock;
     int *tabRGB;
     int X;
     int Y;
@@ -38,9 +37,8 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
     int j;
     
     /* Definition of the size of the image */
-    dimBlock    = image_give_dim    (img);
-    widthBlock  = image_give_largeur(img) / n;
-    heightBlock = image_give_hauteur(img) / m;
+    widthBlock  = (image_give_largeur(img) + n - 1) / n; /* Ce calcul arrondie au supérieur            */
+    heightBlock = (image_give_hauteur(img) + m - 1) / m; /* afin que le surplus de pixels soit réparti */
 
     /* Calculation of M0 */
     *M0 = widthBlock*heightBlock;
@@ -72,7 +70,6 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
     while( (Y <= (initialY + heightBlock)) && (X <= (initialX + widthBlock)) ) {
         for (i = 0 ; i < widthBlock ; i++) {
             tabRGB = image_lire_pixel(img);
-            printf("rouge %d\n", tabRGB[0]);
             M1[0] += tabRGB[0];
             M1[1] += tabRGB[1];
             M1[2] += tabRGB[2];
@@ -100,10 +97,6 @@ extern void give_moments(image img, int numBlock, int n, int m, int* M0, double*
             Y++;
             image_pixel_dessous(img);
         }
-        printf("M1[0] %f\n", M1[0]);
     }
-
-    printf("X*Y %d\nM0 %d\n", X*Y, *M0);
-    printf("M1/M0 %f\n", M1[0] / *M0);
 }
 
